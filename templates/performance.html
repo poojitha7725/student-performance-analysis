@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}Performance Analysis - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-chart-line text-primary me-2"></i>Performance Analysis</h3>
+        <p class="text-muted mb-0">Multi-dimensional academic analysis and comparative evaluations</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#compareModal">
+        <i class="fas fa-balance-scale me-1"></i>Compare Students Side-by-Side
+    </button>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('performance') }}" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Department</label>
+                <select name="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                        <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All Semesters</option>
+                    {% for s in semesters %}
+                        <option value="{{ s }}" {% if selected_sem|string == s|string %}selected{% endif %}>Semester {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Subject</label>
+                <select name="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for sb in subjects %}
+                        <option value="{{ sb }}" {% if selected_subj == sb %}selected{% endif %}>{{ sb }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>Filter</button>
+                <a href="{{ url_for('performance') }}" class="btn btn-outline-secondary"><i class="fas fa-redo"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Performance Results Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0">Subject Records ({{ records|length }} Found)</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Student ID</th>
+                        <th>Student Name</th>
+                        <th>Department</th>
+                        <th>Sem</th>
+                        <th>Subject</th>
+                        <th>Total Marks</th>
+                        <th>Grade</th>
+                        <th>Result</th>
+                        <th>Attendance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">{{ r.student_id }}</td>
+                        <td>{{ r.student_name }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ r.department }}</span></td>
+                        <td>Sem {{ r.semester }}</td>
+                        <td><strong>{{ r.subject }}</strong></td>
+                        <td><span class="fw-bold">{{ r.total_marks }}</span></td>
+                        <td>
+                            <span class="badge {% if r.grade in ['A+', 'A'] %}bg-success{% elif r.grade in ['B+', 'B'] %}bg-primary{% elif r.grade == 'C' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ r.grade }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ 'bg-success' if r.result == 'Pass' else 'bg-danger' }}">
+                                {{ r.result }}
+                            </span>
+                        </td>
+                        <td>{{ r.attendance_percentage }}%</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fas fa-chart-bar fa-3x mb-3 text-secondary"></i>
+                            <p class="mb-0">No records found matching the filter criteria.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Modal -->
+<div class="modal fade" id="compareModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fas fa-balance-scale text-primary me-2"></i>Compare Students Side-by-Side</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Select 2 to 4 students to compare their academic metrics and subject averages:</p>
+                <div class="row g-2 mb-4">
+                    {% for st in students %}
+                    <div class="col-md-4 col-sm-6">
+                        <div class="form-check p-2 border rounded">
+                            <input class="form-check-input student-compare-checkbox ms-1" type="checkbox" value="{{ st.student_id }}" id="chk_{{ st.student_id }}">
+                            <label class="form-check-label ms-2 small" for="chk_{{ st.student_id }}">
+                                <strong>{{ st.student_name }}</strong> ({{ st.student_id }})<br>
+                                <span class="text-muted">{{ st.department }} - Sem {{ st.semester }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="text-end mb-4">
+                    <button type="button" class="btn btn-primary" onclick="runComparison()">
+                        <i class="fas fa-play me-1"></i>Generate Comparison
+                    </button>
+                </div>
+
+                <div id="comparisonResultsContainer" class="d-none">
+                    <hr>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-poll text-success me-2"></i>Comparison Matrix</h6>
+                    <div class="table-responsive" id="comparisonTableWrapper"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function runComparison() {
+    const checked = Array.from(document.querySelectorAll('.student-compare-checkbox:checked')).map(cb => cb.value);
+    if (checked.length < 2) {
+        showToast('Please select at least 2 students to compare.', 'warning');
+        return;
+    }
+    if (checked.length > 5) {
+        showToast('Please select at most 5 students for optimal side-by-side view.', 'warning');
+        return;
+    }
+
+    showLoading('Analyzing student comparison data...');
+    const res = await apiFetch('/api/performance/compare', {
+        method: 'POST',
+        body: JSON.stringify({ student_ids: checked })
+    });
+    hideLoading();
+
+    if (res && res.success) {
+        const d = res.data;
+        const comps = d.comparisons || [];
+
+        let tableHtml = `
+            <table class="table table-bordered text-center align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-start">Metric</th>
+                        ${comps.map(c => `<th><strong>${c.student_name}</strong><br><small class="text-muted">${c.student_id}</small></th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-start fw-bold">Department</td>
+                        ${comps.map(c => `<td>${c.department}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold">Semester</td>
+                        ${comps.map(c => `<td>Sem ${c.semester}</td>`).join('')}
+                    </tr>
+                    <tr class="table-primary">
+                        <td class="text-start fw-bold">Average Marks</td>
+                        ${comps.map(c => `<td class="fw-bold text-primary fs-5">${c.average_marks}%</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold">Rank in Group</td>
+                        ${comps.map(c => `<td><span class="badge ${c.rank_by_marks === 1 ? 'bg-success' : 'bg-secondary'}">#${c.rank_by_marks}</span></td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold">Attendance</td>
+                        ${comps.map(c => `<td>${c.attendance_percentage}%</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold">Pass Rate</td>
+                        ${comps.map(c => `<td>${c.pass_percentage}% (${c.pass_count}/${c.total_subjects})</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold">Highest Scoring Subject</td>
+                        ${comps.map(c => `<td>${c.highest_scoring_subject ? `${c.highest_scoring_subject.subject} (${c.highest_scoring_subject.total_marks})` : 'N/A'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="text-start fw-bold">Lowest Scoring Subject</td>
+                        ${comps.map(c => `<td>${c.lowest_scoring_subject ? `${c.lowest_scoring_subject.subject} (${c.lowest_scoring_subject.total_marks})` : 'N/A'}</td>`).join('')}
+                    </tr>
+                </tbody>
+            </table>
+        `;
+
+        document.getElementById('comparisonTableWrapper').innerHTML = tableHtml;
+        document.getElementById('comparisonResultsContainer').classList.remove('d-none');
+    } else {
+        showToast(res.error || 'Comparison failed', 'danger');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Attendance Analysis - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-calendar-check text-primary me-2"></i>Attendance Analysis</h3>
+        <p class="text-muted mb-0">Track attendance distribution, thresholds, and performance impacts</p>
+    </div>
+</div>
+
+<!-- Attendance Tier Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card stat-card-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Good Attendance (&ge; 75%)</p>
+                        <h3 class="stat-value text-success">{{ high_count }}</h3>
+                        <small class="text-muted">Eligible for end-semester exams</small>
+                    </div>
+                    <div class="stat-icon bg-success-light">
+                        <i class="fas fa-user-check text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card stat-card-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Warning Zone (65% - 74%)</p>
+                        <h3 class="stat-value text-warning">{{ medium_count }}</h3>
+                        <small class="text-muted">Requires attendance improvement</small>
+                    </div>
+                    <div class="stat-icon bg-warning-light">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card stat-card-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Critical Attendance (&lt; 65%)</p>
+                        <h3 class="stat-value text-danger">{{ low_count }}</h3>
+                        <small class="text-muted">Shortage / Condone required</small>
+                    </div>
+                    <div class="stat-icon bg-danger-light">
+                        <i class="fas fa-user-times text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Critical Attendance Students Table -->
+{% if low_students %}
+<div class="card shadow-sm mb-4 border-danger">
+    <div class="card-header bg-danger text-white py-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-bell me-2"></i>Critical Attendance Shortage (&lt; 65%)</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Student ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Attendance</th>
+                        <th>Average Marks</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in low_students %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-danger">{{ s.student_id }}</td>
+                        <td><strong>{{ s.student_name }}</strong></td>
+                        <td>{{ s.department }}</td>
+                        <td>Sem {{ s.semester }}</td>
+                        <td><span class="badge bg-danger fs-6">{{ s.attendance }}%</span></td>
+                        <td>{{ s.avg_marks|round(1) }}%</td>
+                        <td><span class="badge bg-danger-light text-danger">Severe Shortage</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Full Attendance Roster -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Complete Attendance Record</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Student ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Attendance Level</th>
+                        <th>Avg Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">{{ s.student_id }}</td>
+                        <td><strong>{{ s.student_name }}</strong></td>
+                        <td><span class="badge bg-light text-dark border">{{ s.department }}</span></td>
+                        <td>Sem {{ s.semester }}</td>
+                        <td style="width: 250px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar {% if s.attendance < 65 %}bg-danger{% elif s.attendance < 75 %}bg-warning{% else %}bg-success{% endif %}"
+                                         role="progressbar" style="width: {{ s.attendance }}%"></div>
+                                </div>
+                                <span class="fw-bold small">{{ s.attendance }}%</span>
+                            </div>
+                        </td>
+                        <td>{{ s.avg_marks|round(1) }}%</td>
+                        <td>
+                            {% if s.attendance >= 75 %}
+                                <span class="badge bg-success-light text-success"><i class="fas fa-check me-1"></i>Good</span>
+                            {% elif s.attendance >= 65 %}
+                                <span class="badge bg-warning-light text-warning"><i class="fas fa-exclamation me-1"></i>Warning</span>
+                            {% else %}
+                                <span class="badge bg-danger-light text-danger"><i class="fas fa-times me-1"></i>Critical</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

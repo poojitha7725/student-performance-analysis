@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}Student Management - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-users text-primary me-2"></i>Student Management</h3>
+        <p class="text-muted mb-0">Manage enrolled students, academic records, and subject scores</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+            <i class="fas fa-user-plus me-1"></i>Add Student
+        </button>
+    </div>
+</div>
+
+<!-- Filters Card -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('students') }}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Search Student</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by name or ID..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Department</label>
+                <select name="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                        <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All Semesters</option>
+                    {% for s in semesters %}
+                        <option value="{{ s }}" {% if selected_sem|string == s|string %}selected{% endif %}>Semester {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>Filter</button>
+                <a href="{{ url_for('students') }}" class="btn btn-outline-secondary"><i class="fas fa-redo"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Students Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Student ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Gender</th>
+                        <th>Avg Marks</th>
+                        <th>Attendance</th>
+                        <th>Grade</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">{{ s.student_id }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ s.student_name }}</div>
+                            <small class="text-muted">Age: {{ s.age }}</small>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ s.department }}</span></td>
+                        <td>Sem {{ s.semester }}</td>
+                        <td>{{ s.gender }}</td>
+                        <td>
+                            <span class="fw-bold">{{ s.avg_marks }}%</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                    <div class="progress-bar {% if s.attendance < 65 %}bg-danger{% elif s.attendance < 75 %}bg-warning{% else %}bg-success{% endif %}"
+                                         role="progressbar" style="width: {{ s.attendance }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ s.attendance }}%</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if s.overall_grade in ['A+', 'A'] %}bg-success{% elif s.overall_grade in ['B+', 'B'] %}bg-primary{% elif s.overall_grade == 'C' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ s.overall_grade }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if s.risk_category == 'High Risk' %}
+                                <span class="badge bg-danger-light text-danger"><i class="fas fa-exclamation-triangle me-1"></i>High Risk</span>
+                            {% elif s.risk_category == 'Medium Risk' %}
+                                <span class="badge bg-warning-light text-warning"><i class="fas fa-exclamation-circle me-1"></i>Medium</span>
+                            {% else %}
+                                <span class="badge bg-success-light text-success"><i class="fas fa-check me-1"></i>Good</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewStudent('{{ s.student_id }}')" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent('{{ s.student_id }}')" title="Delete Student">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="fas fa-user-graduate fa-3x mb-3 text-secondary"></i>
+                            <p class="mb-0">No students found matching your criteria.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-plus text-primary me-2"></i>Add New Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addStudentForm" onsubmit="submitAddStudent(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Student ID *</label>
+                        <input type="text" class="form-control" name="student_id" required placeholder="e.g. STU1020">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" name="student_name" required placeholder="e.g. John Doe">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-control" name="age" value="20" min="15" max="40">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label">Department</label>
+                            <select class="form-select" name="department">
+                                {% for d in departments %}
+                                    <option value="{{ d }}">{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Semester</label>
+                            <select class="form-select" name="semester">
+                                {% for s in semesters %}
+                                    <option value="{{ s }}">Semester {{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Student Modal -->
+<div class="modal fade" id="viewStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="viewStudentTitle">Student Performance Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewStudentBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function submitAddStudent(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    const res = await apiFetch('/api/students', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+
+    if (res && res.success) {
+        showToast(res.message, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
+        setTimeout(() => location.reload(), 1000);
+    } else {
+        showToast(res.error || 'Failed to add student', 'danger');
+    }
+}
+
+async function viewStudent(studentId) {
+    const modal = new bootstrap.Modal(document.getElementById('viewStudentModal'));
+    modal.show();
+    document.getElementById('viewStudentBody').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Loading student records...</p>
+        </div>
+    `;
+
+    const res = await apiFetch(`/api/students/${studentId}`);
+    if (res && res.success) {
+        const s = res.data;
+        let subjectsHtml = '';
+        (s.subjects || []).forEach(sub => {
+            subjectsHtml += `
+                <tr>
+                    <td><strong>${sub.subject}</strong></td>
+                    <td>${sub.internal_marks}</td>
+                    <td>${sub.external_marks}</td>
+                    <td><span class="fw-bold">${sub.total_marks}</span></td>
+                    <td><span class="badge ${sub.grade === 'F' ? 'bg-danger' : 'bg-primary'}">${sub.grade}</span></td>
+                    <td><span class="badge ${sub.result === 'Pass' ? 'bg-success' : 'bg-danger'}">${sub.result}</span></td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('viewStudentTitle').textContent = `${s.student.student_name} (${s.student.student_id})`;
+        document.getElementById('viewStudentBody').innerHTML = `
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                        <small class="text-muted d-block">Department</small>
+                        <strong>${s.student.department}</strong>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                        <small class="text-muted d-block">Semester</small>
+                        <strong>Sem ${s.student.semester}</strong>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                        <small class="text-muted d-block">Average Marks</small>
+                        <strong class="text-primary">${s.average_marks}%</strong>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                        <small class="text-muted d-block">Attendance</small>
+                        <strong class="${s.attendance_percentage < 65 ? 'text-danger' : 'text-success'}">${s.attendance_percentage}%</strong>
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="fw-bold mb-3"><i class="fas fa-book-open me-2 text-primary"></i>Enrolled Subjects & Scores</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Subject</th>
+                            <th>Internal</th>
+                            <th>External</th>
+                            <th>Total</th>
+                            <th>Grade</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>${subjectsHtml || '<tr><td colspan="6" class="text-center text-muted">No subject records available</td></tr>'}</tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 text-end">
+                <a href="/recommendations?student_id=${s.student.student_id}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-lightbulb me-1"></i>View Recommendations
+                </a>
+            </div>
+        `;
+    } else {
+        document.getElementById('viewStudentBody').innerHTML = `<div class="alert alert-danger">${res.error || 'Could not load data'}</div>`;
+    }
+}
+
+async function deleteStudent(studentId) {
+    if (!confirm(`Are you sure you want to delete student ${studentId}? All performance records will also be removed.`)) {
+        return;
+    }
+
+    const res = await apiFetch(`/api/students/${studentId}`, { method: 'DELETE' });
+    if (res && res.success) {
+        showToast('Student deleted successfully', 'success');
+        setTimeout(() => location.reload(), 1000);
+    } else {
+        showToast(res.error || 'Failed to delete student', 'danger');
+    }
+}
+</script>
+{% endblock %}

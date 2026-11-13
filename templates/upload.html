@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Dataset Upload - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-upload text-primary me-2"></i>Dataset Upload</h3>
+        <p class="text-muted mb-0">Upload student records via CSV with automatic data validation and cleaning</p>
+    </div>
+    <a href="/api/sample-csv" class="btn btn-outline-success">
+        <i class="fas fa-file-csv me-2"></i>Download Sample CSV Template
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Upload Card -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="fas fa-cloud-upload-alt text-primary me-2"></i>Upload File</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}">
+                    <div class="p-5 border-2 border-dashed rounded text-center bg-light mb-3" id="dropArea" style="border: 2px dashed #cbd5e1; cursor: pointer;">
+                        <i class="fas fa-file-excel fa-3x text-primary mb-3"></i>
+                        <h5>Select or Drag &amp; Drop CSV File</h5>
+                        <p class="text-muted small mb-3">Only .csv files up to 16MB are accepted</p>
+                        <input type="file" name="file" id="csvFileInput" class="d-none" accept=".csv" required onchange="handleFileSelect(this)">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('csvFileInput').click()">
+                            Browse File
+                        </button>
+                        <div id="selectedFileName" class="mt-3 fw-bold text-success d-none"></div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success py-2">
+                            <i class="fas fa-check-circle me-1"></i>Validate, Clean &amp; Import Dataset
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requirements Card -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="fas fa-info-circle text-info me-2"></i>Dataset Schema &amp; Rules</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Your CSV file must include the following column headers (case-insensitive):</p>
+                <div class="row g-2 mb-3">
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>student_id</code> (string)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>student_name</code> (string)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>age</code> (number)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>gender</code> (Male/Female)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>department</code> (string)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>semester</code> (1-8)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>subject</code> (string)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>internal_marks</code> (0-30/100)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>external_marks</code> (0-70/100)</span></div>
+                    <div class="col-6"><span class="badge bg-light text-dark border p-2 w-100 text-start"><code>attendance_percentage</code> (0-100)</span></div>
+                </div>
+
+                <div class="alert alert-secondary small mb-0">
+                    <i class="fas fa-magic me-1 text-primary"></i>
+                    <strong>Automated Cleaning:</strong> Null numeric values will be filled with 0, values outside 0-100 will be clamped, and total marks and letter grades will be automatically synchronized.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if result %}
+<div class="card mt-4 shadow-sm border-success">
+    <div class="card-header bg-success text-white py-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-check-circle me-2"></i>Import Summary for {{ result.filename }}</h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 text-center mb-3">
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded">
+                    <h4 class="fw-bold mb-0 text-primary">{{ result.rows_processed }}</h4>
+                    <small class="text-muted">Total Rows Processed</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded">
+                    <h4 class="fw-bold mb-0 text-success">{{ result.students_inserted }}</h4>
+                    <small class="text-muted">Students Upserted</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded">
+                    <h4 class="fw-bold mb-0 text-info">{{ result.subjects_inserted }}</h4>
+                    <small class="text-muted">Subject Marks Saved</small>
+                </div>
+            </div>
+        </div>
+
+        {% if result.cleaning_changes %}
+            <h6 class="fw-bold mt-4"><i class="fas fa-broom me-2 text-warning"></i>Cleaning Adjustments</h6>
+            <ul class="list-group list-group-flush small">
+                {% for c in result.cleaning_changes %}
+                    <li class="list-group-item text-muted"><i class="fas fa-check text-success me-2"></i>{{ c }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if result.warnings %}
+            <h6 class="fw-bold mt-4 text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Warnings</h6>
+            <ul class="list-group list-group-flush small">
+                {% for w in result.warnings %}
+                    <li class="list-group-item text-warning">{{ w }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="mt-4 text-end">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const name = input.files[0].name;
+        const display = document.getElementById('selectedFileName');
+        display.textContent = `Selected: ${name}`;
+        display.classList.remove('d-none');
+    }
+}
+
+const dropArea = document.getElementById('dropArea');
+['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#4361ee';
+        dropArea.style.backgroundColor = '#eef2ff';
+    }, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#cbd5e1';
+        dropArea.style.backgroundColor = '#f8fafc';
+    }, false);
+});
+
+dropArea.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length) {
+        document.getElementById('csvFileInput').files = files;
+        handleFileSelect(document.getElementById('csvFileInput'));
+    }
+});
+</script>
+{% endblock %}

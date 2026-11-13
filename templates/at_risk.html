@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}At-Risk Students - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-exclamation-triangle text-danger me-2"></i>At-Risk Students &amp; Early Intervention</h3>
+        <p class="text-muted mb-0">Identify vulnerable students based on marks, attendance, and failed subjects</p>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card stat-card-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Critical / High Risk</p>
+                        <h3 class="stat-value text-danger">{{ high_risk_count }}</h3>
+                        <small class="text-muted">Marks &lt; 35% or Attendance &lt; 50%</small>
+                    </div>
+                    <div class="stat-icon bg-danger-light">
+                        <i class="fas fa-exclamation-circle text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card stat-card-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Moderate / Medium Risk</p>
+                        <h3 class="stat-value text-warning">{{ medium_risk_count }}</h3>
+                        <small class="text-muted">Marks &lt; 50% or Attendance &lt; 65%</small>
+                    </div>
+                    <div class="stat-icon bg-warning-light">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card stat-card-purple h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Total Requiring Attention</p>
+                        <h3 class="stat-value text-purple">{{ total_risk }}</h3>
+                        <small class="text-muted">Active counselling &amp; mentoring</small>
+                    </div>
+                    <div class="stat-icon bg-purple-light">
+                        <i class="fas fa-user-shield text-purple"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- At-Risk Students List -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-list text-danger me-2"></i>Students Requiring Immediate Academic Support</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Student ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Sem</th>
+                        <th>Avg Marks</th>
+                        <th>Attendance</th>
+                        <th>Risk Level</th>
+                        <th>Key Risk Factors</th>
+                        <th class="text-end pe-4">Intervention</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">{{ s.student_id }}</td>
+                        <td><strong>{{ s.student_name }}</strong></td>
+                        <td><span class="badge bg-light text-dark border">{{ s.department }}</span></td>
+                        <td>Sem {{ s.semester }}</td>
+                        <td><span class="fw-bold {{ 'text-danger' if s.average_marks < 40 else 'text-warning' }}">{{ s.average_marks }}%</span></td>
+                        <td><span class="fw-bold {{ 'text-danger' if s.attendance_percentage < 65 else 'text-warning' }}">{{ s.attendance_percentage }}%</span></td>
+                        <td>
+                            {% if s.risk_category == 'High Risk' %}
+                                <span class="badge bg-danger"><i class="fas fa-radiation me-1"></i>High Risk</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-exclamation me-1"></i>Medium Risk</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <ul class="list-unstyled mb-0 small text-danger">
+                                {% for r in s.risk_reasons %}
+                                    <li><i class="fas fa-angle-right me-1"></i>{{ r }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-outline-primary btn-sm" onclick='showInterventions({{ s|tojson|safe }})'>
+                                <i class="fas fa-stethoscope me-1"></i>Action Plan
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-success">
+                            <i class="fas fa-shield-alt fa-3x mb-3 text-success"></i>
+                            <h5>All Students Are Safe!</h5>
+                            <p class="text-muted mb-0">No students currently fall under High or Medium risk categories.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Intervention Modal -->
+<div class="modal fade" id="interventionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold" id="intStudentName">Academic Support Plan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                    <strong>Target Areas:</strong> Low score reinforcement and attendance recovery.
+                </div>
+                <h6 class="fw-bold mb-2">Recommended Steps:</h6>
+                <ul id="intList" class="list-group list-group-flush small"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showInterventions(student) {
+    document.getElementById('intStudentName').textContent = `Intervention Plan for ${student.student_name} (${student.student_id})`;
+    const list = document.getElementById('intList');
+    list.innerHTML = '';
+    (student.recommendations || []).forEach(item => {
+        list.innerHTML += `<li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>${item}</li>`;
+    });
+    new bootstrap.Modal(document.getElementById('interventionModal')).show();
+}
+</script>
+{% endblock %}

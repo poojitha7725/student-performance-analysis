@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}About - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-info-circle text-primary me-2"></i>About the Project</h3>
+        <p class="text-muted mb-0">System Architecture, Features &amp; Implementation Details</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="fas fa-graduation-cap text-primary me-2"></i>Student Performance Analysis (SPA) System</h6>
+            </div>
+            <div class="card-body">
+                <p>
+                    The <strong>Student Performance Analysis (SPA)</strong> platform is an end-to-end academic analytics solution designed to ingest, clean, evaluate, and monitor student academic progression and institutional performance indicators.
+                </p>
+                <p>
+                    By combining real-time database queries with analytical heuristics and visual dashboards, the system allows educators, counselors, and department heads to identify at-risk students early, recognize top performers, and tailor pedagogical interventions.
+                </p>
+
+                <h6 class="fw-bold mt-4 mb-3"><i class="fas fa-star text-warning me-2"></i>Core System Modules</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-primary"><i class="fas fa-tachometer-alt me-1"></i>Analytics Dashboard</h6>
+                            <p class="small text-muted mb-0">Interactive visual charts for department, semester, subject, and gender trends powered by Chart.js.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-success"><i class="fas fa-upload me-1"></i>ETL &amp; Data Cleaning</h6>
+                            <p class="small text-muted mb-0">Automated CSV schema validation, null value imputations, range clamping, and grade recalculation.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Risk Stratification</h6>
+                            <p class="small text-muted mb-0">Dual-threshold risk matrix evaluating attendance shortages and exam failures to flag high-risk students.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-info"><i class="fas fa-file-pdf me-1"></i>Audit Reporting</h6>
+                            <p class="small text-muted mb-0">Automated publication-ready PDF and CSV generation with ReportLab tables, statistics, and metadata.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="fas fa-cubes text-primary me-2"></i>Technology Stack</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="fab fa-python text-primary me-2"></i><strong>Backend</strong></span>
+                        <span class="badge bg-primary">Python 3.14 / Flask 3.1</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="fas fa-database text-secondary me-2"></i><strong>Database</strong></span>
+                        <span class="badge bg-secondary">SQLite 3</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="fas fa-table text-success me-2"></i><strong>Data Processing</strong></span>
+                        <span class="badge bg-success">Pandas 3.0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="fas fa-file-pdf text-danger me-2"></i><strong>PDF Engine</strong></span>
+                        <span class="badge bg-danger">ReportLab 5.0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="fab fa-bootstrap text-purple me-2"></i><strong>UI Framework</strong></span>
+                        <span class="badge bg-purple">Bootstrap 5.3</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="fas fa-chart-pie text-warning me-2"></i><strong>Charts</strong></span>
+                        <span class="badge bg-warning text-dark">Chart.js 4.4</span>
+                    </li>
+                </ul>
+
+                <div class="p-3 bg-light rounded mt-4">
+                    <small class="text-muted d-block mb-1">Architecture Pattern</small>
+                    <strong class="text-dark">Modular MVC (Model-View-Controller) with RESTful JSON endpoints</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

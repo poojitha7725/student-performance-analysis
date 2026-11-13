@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Recommendations - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-lightbulb text-warning me-2"></i>Personalized Recommendations Engine</h3>
+        <p class="text-muted mb-0">Rule-driven, data-backed guidance and study strategies for individual students</p>
+    </div>
+</div>
+
+<!-- Student Selector -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('recommendations') }}" class="row g-3 align-items-end">
+            <div class="col-md-9">
+                <label class="form-label small fw-bold text-muted">Select Student</label>
+                <select name="student_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Choose a Student to Analyze --</option>
+                    {% for s in students %}
+                        <option value="{{ s.student_id }}" {% if selected_id == s.student_id %}selected{% endif %}>
+                            {{ s.student_id }} - {{ s.student_name }} ({{ s.department }} - Sem {{ s.semester }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i>Get Recommendations
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if rec and not rec.error %}
+<!-- Student Profile Overview -->
+<div class="card shadow-sm mb-4 border-primary">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1 text-primary">{{ rec.student.student_name }}</h4>
+                <p class="text-muted mb-0">
+                    ID: <strong>{{ rec.student.student_id }}</strong> |
+                    Department: <strong>{{ rec.student.department }}</strong> |
+                    Semester: <strong>{{ rec.student.semester }}</strong>
+                </p>
+            </div>
+            <div class="d-flex gap-3 text-center">
+                <div class="p-2 px-3 bg-light rounded">
+                    <small class="text-muted d-block">Overall Average</small>
+                    <h5 class="fw-bold mb-0 text-primary">{{ rec.summary.average_marks if rec.summary else 'N/A' }}%</h5>
+                </div>
+                <div class="p-2 px-3 bg-light rounded">
+                    <small class="text-muted d-block">Attendance</small>
+                    <h5 class="fw-bold mb-0 {{ 'text-danger' if rec.attendance < 65 else 'text-success' }}">{{ rec.attendance }}%</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- General Academic Advice -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="fas fa-graduation-cap text-primary me-2"></i>Academic Guidance</h6>
+            </div>
+            <div class="card-body">
+                {% if rec.overall_recommendations %}
+                    <ul class="list-group list-group-flush">
+                        {% for r in rec.overall_recommendations %}
+                            <li class="list-group-item d-flex align-items-start gap-2">
+                                <i class="fas fa-arrow-circle-right text-primary mt-1"></i>
+                                <span>{{ r }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">No general recommendations available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Guidance -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="fas fa-user-clock text-warning me-2"></i>Attendance &amp; Discipline Advice</h6>
+            </div>
+            <div class="card-body">
+                {% if rec.attendance_recommendations %}
+                    <ul class="list-group list-group-flush">
+                        {% for r in rec.attendance_recommendations %}
+                            <li class="list-group-item d-flex align-items-start gap-2">
+                                <i class="fas fa-check-circle text-warning mt-1"></i>
+                                <span>{{ r }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">Attendance record is satisfactory.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Specific Analysis -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="fas fa-book text-success me-2"></i>Subject-Wise Specific Interventions</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Subject</th>
+                                <th>Total Score</th>
+                                <th>Grade</th>
+                                <th>Result</th>
+                                <th>Specific Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in rec.subject_recommendations %}
+                            <tr>
+                                <td class="ps-4 fw-bold">{{ sub.subject }}</td>
+                                <td><span class="fw-bold">{{ sub.marks }}</span></td>
+                                <td>
+                                    <span class="badge {% if sub.grade in ['A+', 'A'] %}bg-success{% elif sub.grade in ['B+', 'B'] %}bg-primary{% elif sub.grade == 'C' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ sub.grade }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if sub.result == 'Pass' else 'bg-danger' }}">
+                                        {{ sub.result }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <ul class="list-unstyled mb-0 small">
+                                        {% for advice in sub.recommendations %}
+                                            <li class="text-muted"><i class="fas fa-caret-right text-primary me-1"></i>{{ advice }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">No subject records available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif selected_id %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i>Student record not found.
+</div>
+{% else %}
+<div class="card shadow-sm text-center py-5">
+    <div class="card-body">
+        <i class="fas fa-search-plus fa-3x text-muted mb-3"></i>
+        <h5>No Student Selected</h5>
+        <p class="text-muted">Please select a student from the dropdown above to view personalised recommendations.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

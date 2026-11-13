@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Top Performers - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="fas fa-trophy text-warning me-2"></i>Academic Leaderboard</h3>
+        <p class="text-muted mb-0">Honoring top-ranking students across college departments and subjects</p>
+    </div>
+</div>
+
+<!-- Department Toppers Cards -->
+<h5 class="fw-bold mb-3"><i class="fas fa-medal text-primary me-2"></i>Department Toppers</h5>
+<div class="row g-4 mb-5">
+    {% for dept, s in dept_toppers.items() %}
+    <div class="col-xl-4 col-md-6">
+        <div class="card h-100 shadow-sm border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge bg-primary-light text-primary px-3 py-1 rounded-pill fw-bold">{{ dept }}</span>
+                    <i class="fas fa-award fa-2x text-warning"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">{{ s.student_name }}</h5>
+                <p class="text-muted small mb-3">ID: {{ s.student_id }} | Semester {{ s.semester }}</p>
+
+                <div class="row g-2 text-center pt-2 border-top">
+                    <div class="col-6 border-end">
+                        <small class="text-muted d-block">Average Score</small>
+                        <h4 class="fw-bold text-primary mb-0">{{ s.average_marks }}%</h4>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Attendance</small>
+                        <h4 class="fw-bold text-success mb-0">{{ s.attendance_percentage }}%</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Overall Top 10 Leaderboard Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-crown text-warning me-2"></i>Overall Top 10 Performers</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Rank</th>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Gender</th>
+                        <th>Average Marks</th>
+                        <th>Attendance</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in overall %}
+                    <tr>
+                        <td class="ps-4">
+                            {% if loop.index == 1 %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>1st</span>
+                            {% elif loop.index == 2 %}
+                                <span class="badge bg-secondary text-white"><i class="fas fa-medal me-1"></i>2nd</span>
+                            {% elif loop.index == 3 %}
+                                <span class="badge bg-danger text-white"><i class="fas fa-award me-1"></i>3rd</span>
+                            {% else %}
+                                <span class="fw-bold text-muted ps-2">#{{ loop.index }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold text-primary">{{ s.student_id }}</td>
+                        <td><strong>{{ s.student_name }}</strong></td>
+                        <td><span class="badge bg-light text-dark border">{{ s.department }}</span></td>
+                        <td>Sem {{ s.semester }}</td>
+                        <td>{{ s.gender }}</td>
+                        <td><span class="fw-bold text-success fs-6">{{ s.average_marks }}%</span></td>
+                        <td>{{ s.attendance_percentage }}%</td>
+                        <td>
+                            <span class="badge bg-success">{{ s.overall_grade }}</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">No student records available yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

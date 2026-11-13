@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Student Performance Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Dashboard</h3>
+        <p class="text-muted mb-0">Overview of student performance metrics and analytics</p>
+    </div>
+    <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
+        <i class="fas fa-sync-alt me-1"></i>Refresh
+    </button>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4" id="statsContainer">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card stat-card stat-card-blue h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Total Students</p>
+                        <h3 class="stat-value" id="totalStudents">
+                            <div class="placeholder-glow"><span class="placeholder col-6"></span></div>
+                        </h3>
+                    </div>
+                    <div class="stat-icon bg-blue-light">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card stat-card stat-card-green h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Average Marks</p>
+                        <h3 class="stat-value" id="avgMarks">
+                            <div class="placeholder-glow"><span class="placeholder col-6"></span></div>
+                        </h3>
+                    </div>
+                    <div class="stat-icon bg-green-light">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card stat-card stat-card-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Pass %</p>
+                        <h3 class="stat-value" id="passPercent">
+                            <div class="placeholder-glow"><span class="placeholder col-6"></span></div>
+                        </h3>
+                    </div>
+                    <div class="stat-icon bg-success-light">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card stat-card stat-card-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Fail %</p>
+                        <h3 class="stat-value" id="failPercent">
+                            <div class="placeholder-glow"><span class="placeholder col-6"></span></div>
+                        </h3>
+                    </div>
+                    <div class="stat-icon bg-danger-light">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card stat-card stat-card-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Avg Attendance</p>
+                        <h3 class="stat-value" id="avgAttendance">
+                            <div class="placeholder-glow"><span class="placeholder col-6"></span></div>
+                        </h3>
+                    </div>
+                    <div class="stat-icon bg-warning-light">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card stat-card stat-card-purple h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Top Performer</p>
+                        <h3 class="stat-value fs-6" id="topPerformer">
+                            <div class="placeholder-glow"><span class="placeholder col-8"></span></div>
+                        </h3>
+                    </div>
+                    <div class="stat-icon bg-purple-light">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card chart-card h-100">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2 text-primary"></i>Subject-wise Average Marks</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="subjectChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card chart-card h-100">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-building me-2 text-success"></i>Department-wise Performance</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card chart-card h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-venus-mars me-2 text-info"></i>Gender-wise Performance</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="genderChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card chart-card h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2 text-warning"></i>Semester-wise Performance</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="semesterChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 3 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card chart-card h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2 text-danger"></i>Pass vs Fail</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="passFailChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card chart-card h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-braille me-2 text-primary"></i>Attendance vs Performance</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="attendanceScatterChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card chart-card h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-award me-2 text-success"></i>Grade Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="gradeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Chart instances
+let charts = {};
+
+// Color palette
+const COLORS = {
+    primary: '#4361ee',
+    success: '#2ec4b6',
+    danger: '#e71d36',
+    warning: '#ff9f1c',
+    info: '#3a86a8',
+    purple: '#7209b7',
+    pink: '#f72585',
+    teal: '#06d6a0',
+    orange: '#fb8500',
+    indigo: '#480ca8'
+};
+
+const CHART_COLORS = [
+    COLORS.primary, COLORS.success, COLORS.danger, COLORS.warning,
+    COLORS.info, COLORS.purple, COLORS.pink, COLORS.teal,
+    COLORS.orange, COLORS.indigo
+];
+
+const CHART_COLORS_ALPHA = CHART_COLORS.map(c => c + '33');
+
+// Load dashboard data
+async function loadDashboardStats() {
+    try {
+        const res = await apiFetch('/api/dashboard/stats');
+        if (res && res.success) {
+            const s = res.data;
+            document.getElementById('totalStudents').textContent = formatNumber(s.total_students || 0);
+            document.getElementById('avgMarks').textContent = formatPercentage(s.average_marks || 0);
+            document.getElementById('passPercent').textContent = formatPercentage(s.pass_percentage || 0) + '%';
+            document.getElementById('failPercent').textContent = formatPercentage(s.fail_percentage || 0) + '%';
+            document.getElementById('avgAttendance').textContent = formatPercentage(s.average_attendance || 0) + '%';
+            document.getElementById('topPerformer').textContent = s.top_performer || 'N/A';
+        }
+    } catch (err) {
+        console.error('Error loading stats:', err);
+        document.querySelectorAll('.stat-value').forEach(el => {
+            el.textContent = 'N/A';
+        });
+    }
+}
+
+async function loadDashboardCharts() {
+    try {
+        const res = await apiFetch('/api/dashboard/charts');
+        if (res && res.success) {
+            const d = res.data;
+            renderSubjectChart(d.subject_wise || {});
+            renderDepartmentChart(d.department_wise || {});
+            renderGenderChart(d.gender_wise || {});
+            renderSemesterChart(d.semester_wise || {});
+            renderPassFailChart(d.pass_fail || {});
+            renderAttendanceScatterChart(d.attendance_vs_marks || []);
+            renderGradeChart(d.grade_distribution || {});
+        }
+    } catch (err) {
+        console.error('Error loading charts:', err);
+    }
+}
+
+function renderSubjectChart(data) {
+    const ctx = document.getElementById('subjectChart').getContext('2d');
+    if (charts.subject) charts.subject.destroy();
+    charts.subject = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                label: 'Average Marks',
+                data: Object.values(data),
+                backgroundColor: CHART_COLORS_ALPHA,
+                borderColor: CHART_COLORS,
+                borderWidth: 2,
+                borderRadius: 6,
+                barPercentage: 0.7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => `Average: ${ctx.parsed.y.toFixed(1)} marks`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { font: { size: 11 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 }, maxRotation: 45 }
+                }
+            }
+        }
+    });
+}
+
+function renderDepartmentChart(data) {
+    const ctx = document.getElementById('departmentChart').getContext('2d');
+    if (charts.department) charts.department.destroy();
+    charts.department = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                label: 'Average Marks',
+                data: Object.values(data),
+                backgroundColor: [
+                    COLORS.primary + '99', COLORS.success + '99',
+                    COLORS.warning + '99', COLORS.info + '99', COLORS.purple + '99'
+                ],
+                borderColor: [
+                    COLORS.primary, COLORS.success,
+                    COLORS.warning, COLORS.info, COLORS.purple
+                ],
+                borderWidth: 2,
+                borderRadius: 6,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => `Average: ${ctx.parsed.x.toFixed(1)} marks`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderGenderChart(data) {
+    const ctx = document.getElementById('genderChart').getContext('2d');
+    if (charts.gender) charts.gender.destroy();
+    charts.gender = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                label: 'Average Marks',
+                data: Object.values(data),
+                backgroundColor: [COLORS.primary + '99', COLORS.pink + '99'],
+                borderColor: [COLORS.primary, COLORS.pink],
+                borderWidth: 2,
+                borderRadius: 6,
+                barPercentage: 0.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => `Average: ${ctx.parsed.y.toFixed(1)} marks`
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderSemesterChart(data) {
+    const ctx = document.getElementById('semesterChart').getContext('2d');
+    if (charts.semester) charts.semester.destroy();
+    const labels = Object.keys(data).sort((a, b) => parseInt(a) - parseInt(b));
+    charts.semester = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels.map(l => `Semester ${l}`),
+            datasets: [{
+                label: 'Average Marks',
+                data: labels.map(l => data[l]),
+                borderColor: COLORS.primary,
+                backgroundColor: COLORS.primary + '22',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: COLORS.primary,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => `Average: ${ctx.parsed.y.toFixed(1)} marks`
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderPassFailChart(data) {
+    const ctx = document.getElementById('passFailChart').getContext('2d');
+    if (charts.passFail) charts.passFail.destroy();
+    charts.passFail = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pass', 'Fail'],
+            datasets: [{
+                data: [data.pass || 0, data.fail || 0],
+                backgroundColor: [COLORS.success + 'cc', COLORS.danger + 'cc'],
+                borderColor: [COLORS.success, COLORS.danger],
+                borderWidth: 2,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 20, usePointStyle: true, font: { size: 12 } }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                            return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAttendanceScatterChart(data) {
+    const ctx = document.getElementById('attendanceScatterChart').getContext('2d');
+    if (charts.scatter) charts.scatter.destroy();
+    const points = Array.isArray(data) ? data.map(d => ({ x: d.attendance, y: d.marks })) : [];
+    charts.scatter = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Students',
+                data: points,
+                backgroundColor: COLORS.primary + '66',
+                borderColor: COLORS.primary,
+                borderWidth: 1,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => `Attendance: ${ctx.parsed.x}%, Marks: ${ctx.parsed.y}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Attendance (%)', font: { size: 12 } },
+                    beginAtZero: true, max: 100,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: {
+                    title: { display: true, text: 'Average Marks', font: { size: 12 } },
+                    beginAtZero: true, max: 100,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                }
+            }
+        }
+    });
+}
+
+function renderGradeChart(data) {
+    const ctx = document.getElementById('gradeChart').getContext('2d');
+    if (charts.grade) charts.grade.destroy();
+    const gradeOrder = ['A+', 'A', 'B+', 'B', 'C', 'D', 'F'];
+    const gradeColors = {
+        'A+': '#06d6a0', 'A': '#2ec4b6', 'B+': '#4361ee',
+        'B': '#3a86a8', 'C': '#ff9f1c', 'D': '#fb8500', 'F': '#e71d36'
+    };
+    const labels = gradeOrder.filter(g => data[g] !== undefined);
+    const values = labels.map(g => data[g]);
+    const colors = labels.map(g => gradeColors[g] || '#999');
+
+    charts.grade = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors.map(c => c + 'cc'),
+                borderColor: colors,
+                borderWidth: 2,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 15, usePointStyle: true, font: { size: 11 } }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                            return `Grade ${ctx.label}: ${ctx.parsed} students (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function refreshDashboard() {
+    loadDashboardStats();
+    loadDashboardCharts();
+    showToast('Dashboard refreshed successfully', 'success');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardStats();
+    loadDashboardCharts();
+});
+</script>
+{% endblock %}
